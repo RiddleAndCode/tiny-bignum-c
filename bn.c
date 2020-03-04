@@ -34,7 +34,7 @@ static void _rshift_word(struct bn* a, int nwords);
 
 
 /* Public / Exported functions. */
-void bignum_init(struct bn* n)
+void bignum_init_alt(struct bn* n)
 {
   require(n, "n is null");
 
@@ -50,7 +50,7 @@ void bignum_from_int(struct bn* n, DTYPE_TMP i)
 {
   require(n, "n is null");
 
-  bignum_init(n);
+  bignum_init_alt(n);
 
   /* Endianness issue if machine is not little-endian? */
 #ifdef WORD_SIZE
@@ -101,9 +101,8 @@ void bignum_from_string(struct bn* n, char* str, int nbytes)
   require(str, "str is null");
   require(nbytes > 0, "nbytes must be positive");
   require((nbytes & 1) == 0, "string format must be in hex -> equal number of bytes");
-  require((nbytes % (sizeof(DTYPE) * 2)) == 0, "string length must be a multiple of (sizeof(DTYPE) * 2) characters");
-  
-  bignum_init(n);
+
+  bignum_init_alt(n);
 
   DTYPE tmp;                        /* DTYPE is defined in bn.h - uint{8,16,32,64}_t */
   int i = nbytes - (2 * WORD_SIZE); /* index into string */
@@ -202,7 +201,7 @@ void bignum_inc(struct bn* n)
 }
 
 
-void bignum_add(struct bn* a, struct bn* b, struct bn* c)
+void bignum_add_alt(struct bn* a, struct bn* b, struct bn* c)
 {
   require(a, "a is null");
   require(b, "b is null");
@@ -220,7 +219,7 @@ void bignum_add(struct bn* a, struct bn* b, struct bn* c)
 }
 
 
-void bignum_sub(struct bn* a, struct bn* b, struct bn* c)
+void bignum_sub_alt(struct bn* a, struct bn* b, struct bn* c)
 {
   require(a, "a is null");
   require(b, "b is null");
@@ -242,7 +241,7 @@ void bignum_sub(struct bn* a, struct bn* b, struct bn* c)
 }
 
 
-void bignum_mul(struct bn* a, struct bn* b, struct bn* c)
+void bignum_mul_alt(struct bn* a, struct bn* b, struct bn* c)
 {
   require(a, "a is null");
   require(b, "b is null");
@@ -252,24 +251,24 @@ void bignum_mul(struct bn* a, struct bn* b, struct bn* c)
   struct bn tmp;
   int i, j;
 
-  bignum_init(c);
+  bignum_init_alt(c);
 
   for (i = 0; i < BN_ARRAY_SIZE; ++i)
   {
-    bignum_init(&row);
+    bignum_init_alt(&row);
 
     for (j = 0; j < BN_ARRAY_SIZE; ++j)
     {
       if (i + j < BN_ARRAY_SIZE)
       {
-        bignum_init(&tmp);
+        bignum_init_alt(&tmp);
         DTYPE_TMP intermediate = ((DTYPE_TMP)a->array[i] * (DTYPE_TMP)b->array[j]);
         bignum_from_int(&tmp, intermediate);
         _lshift_word(&tmp, i + j);
-        bignum_add(&tmp, &row, &row);
+        bignum_add_alt(&tmp, &row, &row);
       }
     }
-    bignum_add(c, &row, c);
+    bignum_add_alt(c, &row, c);
   }
 }
 
@@ -290,7 +289,7 @@ void bignum_div(struct bn* a, struct bn* b, struct bn* c)
 
   const DTYPE_TMP half_max = 1 + (DTYPE_TMP)(MAX_VAL / 2);
   bool overflow = false;
-  while (bignum_cmp(&denom, a) != LARGER)     // while (denom <= a) {
+  while (bignum_cmp_alt(&denom, a) != LARGER)     // while (denom <= a) {
   {
     if (denom.array[BN_ARRAY_SIZE - 1] >= half_max)
     {
@@ -305,13 +304,13 @@ void bignum_div(struct bn* a, struct bn* b, struct bn* c)
     _rshift_one_bit(&denom);                  // denom >>= 1;
     _rshift_one_bit(&current);                // current >>= 1;
   }
-  bignum_init(c);                             // int answer = 0;
+  bignum_init_alt(c);                             // int answer = 0;
 
   while (!bignum_is_zero(&current))           // while (current != 0)
   {
-    if (bignum_cmp(&tmp, &denom) != SMALLER)  //   if (dividend >= denom)
+    if (bignum_cmp_alt(&tmp, &denom) != SMALLER)  //   if (dividend >= denom)
     {
-      bignum_sub(&tmp, &denom, &tmp);         //     dividend -= denom;
+      bignum_sub_alt(&tmp, &denom, &tmp);         //     dividend -= denom;
       bignum_or(c, &current, c);              //     answer |= current;
     }
     _rshift_one_bit(&current);                //   current >>= 1;
@@ -412,10 +411,10 @@ void bignum_divmod(struct bn* a, struct bn* b, struct bn* c, struct bn* d)
   bignum_div(a, b, c);
 
   /* tmp = (c * b) */
-  bignum_mul(c, b, &tmp);
+  bignum_mul_alt(c, b, &tmp);
 
   /* c = a - tmp */
-  bignum_sub(a, &tmp, d);
+  bignum_sub_alt(a, &tmp, d);
 }
 
 
@@ -461,7 +460,7 @@ void bignum_xor(struct bn* a, struct bn* b, struct bn* c)
 }
 
 
-int bignum_cmp(struct bn* a, struct bn* b)
+int bignum_cmp_alt(struct bn* a, struct bn* b)
 {
   require(a, "a is null");
   require(b, "b is null");
@@ -510,9 +509,9 @@ void bignum_pow(struct bn* a, struct bn* b, struct bn* c)
 
   struct bn tmp;
 
-  bignum_init(c);
+  bignum_init_alt(c);
 
-  if (bignum_cmp(b, c) == EQUAL)
+  if (bignum_cmp_alt(b, c) == EQUAL)
   {
     /* Return 1 when exponent is 0 -- n^0 = 1 */
     bignum_inc(c);
@@ -532,7 +531,7 @@ void bignum_pow(struct bn* a, struct bn* b, struct bn* c)
     {
 
       /* c = tmp * tmp */
-      bignum_mul(&tmp, a, c);
+      bignum_mul_alt(&tmp, a, c);
       /* Decrement b by one */
       bignum_dec(&bcopy);
 
@@ -551,15 +550,15 @@ void bignum_isqrt(struct bn *a, struct bn* b)
 
   struct bn low, high, mid, tmp;
 
-  bignum_init(&low);
+  bignum_init_alt(&low);
   bignum_assign(&high, a);
   bignum_rshift(&high, &mid, 1);
   bignum_inc(&mid);
 
-  while (bignum_cmp(&high, &low) > 0) 
+  while (bignum_cmp_alt(&high, &low) > 0) 
   {
-    bignum_mul(&mid, &mid, &tmp);
-    if (bignum_cmp(&tmp, a) > 0) 
+    bignum_mul_alt(&mid, &mid, &tmp);
+    if (bignum_cmp_alt(&tmp, a) > 0) 
     {
       bignum_assign(&high, &mid);
       bignum_dec(&high);
@@ -568,9 +567,9 @@ void bignum_isqrt(struct bn *a, struct bn* b)
     {
       bignum_assign(&low, &mid);
     }
-    bignum_sub(&high,&low,&mid);
+    bignum_sub_alt(&high,&low,&mid);
     _rshift_one_bit(&mid);
-    bignum_add(&low,&mid,&mid);
+    bignum_add_alt(&low,&mid,&mid);
     bignum_inc(&mid);
   }
   bignum_assign(b,&low);

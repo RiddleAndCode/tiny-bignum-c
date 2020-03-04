@@ -70,7 +70,7 @@ There may well be room for performance-optimizations and improvements.
 
 
 /* Custom assert macro - easy to disable */
-#define require(p, msg) assert(p && msg)
+#define require(p, msg) assert(p && #msg)
 
 
 /* Data-holding structure: array of DTYPEs */
@@ -81,22 +81,22 @@ struct bn
 
 
 
-/* Tokens returned by bignum_cmp() for value comparison */
+/* Tokens returned by bignum_cmp_alt() for value comparison */
 enum { SMALLER = -1, EQUAL = 0, LARGER = 1 };
 
 
 
 /* Initialization functions: */
-void bignum_init(struct bn* n);
+void bignum_init_alt(struct bn* n);
 void bignum_from_int(struct bn* n, DTYPE_TMP i);
 int  bignum_to_int(struct bn* n);
 void bignum_from_string(struct bn* n, char* str, int nbytes);
 void bignum_to_string(struct bn* n, char* str, int maxsize);
 
 /* Basic arithmetic operations: */
-void bignum_add(struct bn* a, struct bn* b, struct bn* c); /* c = a + b */
-void bignum_sub(struct bn* a, struct bn* b, struct bn* c); /* c = a - b */
-void bignum_mul(struct bn* a, struct bn* b, struct bn* c); /* c = a * b */
+void bignum_add_alt(struct bn* a, struct bn* b, struct bn* c); /* c = a + b */
+void bignum_sub_alt(struct bn* a, struct bn* b, struct bn* c); /* c = a - b */
+void bignum_mul_alt(struct bn* a, struct bn* b, struct bn* c); /* c = a * b */
 void bignum_div(struct bn* a, struct bn* b, struct bn* c); /* c = a / b */
 void bignum_mod(struct bn* a, struct bn* b, struct bn* c); /* c = a % b */
 void bignum_divmod(struct bn* a, struct bn* b, struct bn* c, struct bn* d); /* c = a/b, d = a%b */
@@ -109,7 +109,7 @@ void bignum_lshift(struct bn* a, struct bn* b, int nbits); /* b = a << nbits */
 void bignum_rshift(struct bn* a, struct bn* b, int nbits); /* b = a >> nbits */
 
 /* Special operators and comparison */
-int  bignum_cmp(struct bn* a, struct bn* b);               /* Compare: returns LARGER, EQUAL or SMALLER */
+int  bignum_cmp_alt(struct bn* a, struct bn* b);               /* Compare: returns LARGER, EQUAL or SMALLER */
 int  bignum_is_zero(struct bn* n);                         /* For comparison with zero */
 void bignum_inc(struct bn* n);                             /* Increment: add one to n */
 void bignum_dec(struct bn* n);                             /* Decrement: subtract one from n */
